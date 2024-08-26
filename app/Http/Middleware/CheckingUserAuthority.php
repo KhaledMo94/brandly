@@ -2,14 +2,14 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Post;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
+use App\Models\Post;
 use App\Models\Comment;
+use Illuminate\Support\Facades\Auth;
 
-class CheckAuthor
+class CheckingUserAuthority
 {
     /**
      * Handle an incoming request.
@@ -18,6 +18,9 @@ class CheckAuthor
      */
     public function handle(Request $request, Closure $next ,String $type ): Response
     {
+        if (app()->environment('local') && $this->isSwaggerRequest($request)) {
+            return $next($request);
+        }
         if($type == 'post'){
             $post_id = $request->route('post');
             $post = Post::findOrFail($post_id);
@@ -33,5 +36,10 @@ class CheckAuthor
         }else{
             redirect()->route('welcome');
         }
+    }
+
+    protected function isSwaggerRequest($request)
+    {
+        return $request->is('docs/*') || $request->is('api/documentation') || $request->is('api/docs') || $request->is('docs');
     }
 }
